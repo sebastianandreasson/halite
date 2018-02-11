@@ -3,58 +3,23 @@ const Geometry = require('../hlt/Geometry')
 
 const chosenPlanets = {}
 const comittedShips = {}
-const targets = {}
 const lastPositions = {}
 
-const decideOnTarget = (ship, dockedEnemyShips, enemyShips) => {
-  if (dockedEnemyShips[0] && enemyShips[0]) {
-    if (Geometry.distance(enemyShips[0], ship) < 5 ||
-        Geometry.distance(dockedEnemyShips[0], ship) > Geometry.distance(enemyShips[0], ship) + 15) {
-      return enemyShips[0]
-    }
-    return dockedEnemyShips[0]
-  }
-  if (dockedEnemyShips[0]) {
-    return dockedEnemyShips[0]
-  }
-  return enemyShips[0]
-}
-
-const attackStrategy = (gameMap, ship, aggresive = false) => {
-  // first prio targets, ships that are mining
-  const dockedEnemyShips = gameMap
-    .enemyShips
-    .filter(s => s.isDocked())
-    // .filter(s => !targets[s._params.id] || targets[s._params.id].ships < 2)
-    .sort((a, b) => Geometry.distance(ship, a) - Geometry.distance(ship, b))
-
-  // second prio, just any ship!
+const attackStrategy = (gameMap, ship) => {
   const enemyShips = gameMap
     .enemyShips
-    .filter(s => !s.isDocked())
+    .filter(s => s.isDocked())
     .sort((a, b) => Geometry.distance(ship, a) - Geometry.distance(ship, b))
 
-  // no enemies, just return null we should've won here
-  if (!enemyShips.length && !dockedEnemyShips.length) return null
+  if (!enemyShips.length) return null
 
-  // we want to attack docked ships, but if another enemy ship is much closer go for that one instead
-  const enemyShip = decideOnTarget(ship, dockedEnemyShips, enemyShips)
-
-  // dont send more than 2 ships to attack the same target
-  // if (!targets[enemyShip._params.id]) {
-  //   targets[enemyShip._params.id] = {
-  //     ships: 1
-  //   }
-  // } else {
-  //   targets[enemyShip._params.id].ships++
-  // }
-
+  const enemyShip = enemyShips[0]
   return ship.navigate({
     target: enemyShip,
     keepDistanceToTarget: 2,
     speed: constants.MAX_SPEED,
-    avoidObstacles: aggresive ? false : true,
-    ignoreShips: aggresive ? true : false
+    avoidObstacles: true,
+    ignoreShips: false
   })
 }
 
@@ -85,7 +50,7 @@ const checkNearbyEnemies = (gameMap, ship) => {
  */
 module.exports = (gameMap) => {
 
-  const unDockedShipMoves = gameMap.myShips
+  const moves = gameMap.myShips
     .filter(s => s.isUndocked())
     .map(ship => {
       if (lastPositions[ship._params.id] && Geometry.distance(ship, lastPositions[ship._params.id]) === 0) {
@@ -173,18 +138,5 @@ module.exports = (gameMap) => {
       })
     })
 
-  // const dockedShipMoves = gameMap
-  //   .myShips
-  //   .filter(s => s.isDocked())
-  //   .map(ship => {
-  //     const attackStrat = checkNearbyEnemies(gameMap, ship, 10)
-  //     if (attackStrat) {
-  //       delete comittedShips[ship._params.id]
-  //       return ship.unDock()
-  //     }
-  //
-  //     return null
-  //   })
-
-  return unDockedShipMoves // return moves assigned to our ships for the Halite engine to take
+  return moves // return moves assigned to our ships for the Halite engine to take
 }

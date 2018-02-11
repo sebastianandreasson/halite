@@ -112,7 +112,7 @@ class Ship extends Entity {
    * @param {boolean} ignoreShips whether to ignore ships in calculations (this will make your movement faster, but more precarious)
    * @param {boolean} ignorePlanets whether to ignore planets in calculations (useful if you want to crash onto planets)
    */
-  navigate({target, keepDistanceToTarget = 0, speed, avoidObstacles = true, maxCorrections = 45, angularStep = 5, ignoreShips = false, ignorePlanets = false}) {
+  navigate({target, keepDistanceToTarget = 0, speed, avoidObstacles = true, maxCorrections = 45, angularStep = 4, ignoreShips = false, ignorePlanets = false, reverse = false}) {
     if (maxCorrections <= 0) {
       return null
     }
@@ -140,7 +140,7 @@ class Ship extends Entity {
     const angleDegree = this.angleBetweenInDegree(closeToTarget)
 
     const newSpeed = distance >= speed ? speed : distance
-    return this.thrust(newSpeed, angleDegree)
+    return this.thrust(newSpeed, reverse ? angleDegree * 180 : angleDegree)
   }
 
   toString() {
